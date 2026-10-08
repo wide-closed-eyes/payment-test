@@ -1,0 +1,58 @@
+### Переменные окружения
+@host = http://localhost:8000
+@contentType = application/json
+@api_key = test-payment-123
+
+### Создать платёж
+# @name createPayment
+POST {{host}}/api/v1/payments
+Content-Type: {{contentType}}
+Idempotency-Key: 666
+X-API-Key:{{api_key}}
+
+{
+  "amount": 10.11,
+  "currency": "RUB",
+  "description": "description",
+  "metadata": {
+    "user": "UserName"
+  },
+  "webhook_url": "https://example.com/webhook"
+}
+
+### Получить платёж по id
+@paymentId = {{createPayment.response.body.$.id}}
+GET {{host}}/api/v1/payments/{{paymentId}}
+Accept: application/json
+X-API-Key:{{api_key}}
+
+### Повторить платёж (проверка идемпотентности)
+# Отправляем тот же Idempotency-Key, что и выше — должен вернуть ошибку
+POST {{host}}/api/v1/payments
+Content-Type: {{contentType}}
+Idempotency-Key: 666
+X-API-Key:{{api_key}}
+
+{
+  "amount": 99.99,
+  "currency": "RUB",
+  "description": "another description",
+  "metadata": {
+    "target": "shopping"
+  },
+  "webhook_url": "http://localhost:12789/webhook"
+}
+
+### Создать платёж с другим Idempotency-Key
+POST {{host}}/api/v1/payments
+Content-Type: {{contentType}}
+Idempotency-Key: "hello-world"
+X-API-Key:{{api_key}}
+
+{
+  "amount": 55.55,
+  "currency": "USD",
+  "description": "another payment",
+  "metadata": {},
+  "webhook_url": "http://localhost:12789/webhook"
+}

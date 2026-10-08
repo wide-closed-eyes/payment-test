@@ -1,0 +1,86 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: payments_postgres
+    environment:
+      POSTGRES_USER: payments
+      POSTGRES_PASSWORD: payments
+      POSTGRES_DB: payments
+    expose:
+      - 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payments -d payments"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - payments_net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: payments_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    expose:
+      - 5672
+    ports:
+      # - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - payments_net
+
+  consumer:
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile
+    container_name: payments_consumer
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - test.env
+    restart: unless-stopped
+    networks:
+      - payments_net
+
+  api:
+    build:
+      context: ./api-service
+      dockerfile: Dockerfile
+    container_name: payments_api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      consumer:
+        condition: service_started
+    env_file:
+      - test.env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - payments_net
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  payments_net:
+    driver: bridge
