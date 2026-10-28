@@ -5,7 +5,8 @@ from src.api.schemas.payment import (
     PaymentCreateResponse,
     PaymentFullResponse,
 )
-from src.database.repository import OutboxRepositoryGetter, PaymentRepositoryGetter
+from src.database.repository import PaymentRepositoryGetter
+from src.services.payment import PaymentServiceGetter
 
 router = APIRouter(
     prefix="/payments",
@@ -14,23 +15,16 @@ router = APIRouter(
 
 
 @router.post("", response_model=PaymentCreateResponse, status_code=202)
-async def get_status(
+async def create_payment(
     body: PaymentCreate,
-    payment_repository: PaymentRepositoryGetter,
-    outbox_repository: OutboxRepositoryGetter,
+    service: PaymentServiceGetter,
     idempotency_key: str = Header(alias="Idempotency-Key"),
 ):
     try:
-        payment_db = await payment_repository.create_from_request(
-            body=body.model_dump(), idempotency_key=idempotency_key, with_commit=False
-        )
+        payment = await service.create_payment(body=body.model_dump(), idempotency_key=idempotency_key)
     except Exception as e:
         raise HTTPException(status_code=409, detail=str(e))
-
-    await outbox_repository.create_payment_event(payment_db, with_commit=False)
-    await payment_repository.commit()
-
-    return payment_db
+    return payment
 
 
 @router.get("/{payment_id}", response_model=PaymentFullResponse, status_code=200)
