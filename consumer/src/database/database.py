@@ -1,10 +1,11 @@
 from collections.abc import AsyncGenerator
-from datetime import datetime, date
+from datetime import date, datetime
 
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 from src.config import config
+
 
 class Base(DeclarativeBase):
     def __repr__(self):
@@ -12,7 +13,7 @@ class Base(DeclarativeBase):
         for col in self.__table__.columns.keys():
             cols.append(f"{col}={getattr(self, col)}")
         return f"<{self.__class__.__name__} {', '.join(cols)}>"
-    
+
     def dict(self):
         obj = {}
         for c in self.__table__.columns:
@@ -38,10 +39,9 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_fabric() as session:
         try:
             yield session
+            await session.commit()
         except Exception:
-            if session.in_transaction():
-                await session.rollback()
+            await session.rollback()
             raise
         finally:
-            await session.commit()
             await session.close()

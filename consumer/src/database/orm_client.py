@@ -17,11 +17,7 @@ class OrmClient:
         )
         result = await self._session.execute(query)
         return result.scalars().first()
-    
+
     async def update_payment_status(self, payment_id: str, status: str) -> None:
-        query = (
-            update(Payment)
-            .where(Payment.id == payment_id)
-            .values(status=status)
-        )
+        query = update(Payment).where(Payment.id == payment_id).values(status=status)
         await self._session.execute(query)

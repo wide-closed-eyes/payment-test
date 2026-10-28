@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.dependency.repository import AsyncRepository
@@ -14,13 +15,18 @@ class PaymentRepository(AsyncRepository[Payment]):
 
     async def get_full_payment(self, payment_id: str):
         return await self.get_by_pk(payment_id)
-    
-    async def create_from_request(self, body: dict, idempotency_key: str):
+
+    async def create_from_request(
+        self, body: dict, idempotency_key: str, with_commit: bool = True
+    ):
         payment_db = await self.get_one([Payment.idempotency_key == idempotency_key])
         if payment_db:
             raise Exception("Payment already exists")
         payment_db = Payment(**body | {"idempotency_key": idempotency_key})
-        return await self.create(payment_db)
+        try:
+            return await self.create(payment_db, with_commit=with_commit)
+        except IntegrityError:
+            raise Exception("Payment already exists")
 
 
 def get_repository() -> PaymentRepository:

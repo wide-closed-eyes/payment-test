@@ -13,7 +13,7 @@ class Config(BaseSettings):
     @property
     def database_url(self):
         return f"postgresql+asyncpg://{self.db_user}:{self.db_pass}@{self.db_host}:{self.db_port}/{self.db_name}"
-    
+
     amqp_user: str
     amqp_password: str
     amqp_host: str

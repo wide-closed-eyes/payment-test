@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.interfaces import ORMOption
 
-
 M = TypeVar("M", bound=DeclarativeBase)
 
 
@@ -60,7 +59,7 @@ class AsyncRepository(Generic[M]):
         order_by: Any | str | None = None,
         filter: list[Any] | None = None,
         is_for_update: bool = False,
-        limit: int | None = None
+        limit: int | None = None,
     ) -> list[M]:
         """
         Get all records

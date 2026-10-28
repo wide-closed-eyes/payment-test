@@ -1,12 +1,21 @@
-import logging
 import asyncio
+import logging
+
 from faststream import FastStream, Logger
 from faststream.rabbit import RabbitMessage
 
-from src.tools.rabbit_client import broker, dlq, dlx, retry_exchange, retry_5s_queue, retry_15s_queue, retry_45s_queue, main_queue
 from src.logger import logger
 from src.tools.mock_logic import process_payment
-
+from src.tools.rabbit_client import (
+    broker,
+    dlq,
+    dlx,
+    main_queue,
+    retry_5s_queue,
+    retry_15s_queue,
+    retry_45s_queue,
+    retry_exchange,
+)
 
 app = FastStream(broker)
 
@@ -14,6 +23,7 @@ app = FastStream(broker)
 @app.on_startup
 async def on_startup() -> None:
     logger.info("Consumer started, listening on payments.new")
+
 
 @app.after_startup
 async def _declare_topology() -> None:
@@ -39,14 +49,13 @@ RETRY_ROUTING_KEYS = {
     3: "retry.45s",
 }
 
+
 @app.on_shutdown
 async def on_shutdown() -> None:
     logger.info("Consumer stopped")
 
-@broker.subscriber(
-    main_queue,
-    ack_policy="MANUAL"
-)
+
+@broker.subscriber(main_queue, ack_policy="MANUAL")
 async def process_new_payment(
     body: dict,
     msg: RabbitMessage,
@@ -83,10 +92,12 @@ async def process_new_payment(
             persist=True,
         )
         await msg.ack()
-    
+        return
+
     logger.info(f"Payment {body.get('id')} processed successfully")
 
     await msg.ack()
+
 
 if __name__ == "__main__":
     asyncio.run(app.run(log_level=logging.DEBUG))

@@ -7,15 +7,18 @@ from alembic import context
 
 from src.config import config as settings
 from src.database.tables.payment import Payment  # noqa
+from src.database.tables.outbox import OutboxEvent  # noqa
 from src.database.database import Base
-
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", f"postgresql+psycopg2://{settings.db_user}:{settings.db_pass}@{settings.db_host}:{settings.db_port}/{settings.db_name}")
+config.set_main_option(
+    "sqlalchemy.url",
+    f"postgresql+psycopg2://{settings.db_user}:{settings.db_pass}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
+)
 
 target_metadata = Base.metadata
 
@@ -58,9 +61,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

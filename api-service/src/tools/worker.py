@@ -1,6 +1,6 @@
-from datetime import datetime
 import asyncio
 import logging
+from datetime import datetime
 
 from faststream.rabbit import RabbitBroker
 
@@ -29,7 +29,7 @@ class OutboxWorker:
                     await self.rmq_client.publish(
                         message=event.payload,
                         queue=event.event_type,
-                        correlation_id=str(event.id)
+                        correlation_id=str(event.id),
                     )
 
                     event.processed = True

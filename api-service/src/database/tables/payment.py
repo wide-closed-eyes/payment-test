@@ -1,9 +1,9 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import DateTime, String, DECIMAL, Text, func
+from sqlalchemy import DECIMAL, DateTime, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from src.database.database import Base
 
@@ -13,10 +13,12 @@ class PaymentStatus(str, Enum):
     SUCCESS = "succeeded"
     FAILED = "failed"
 
+
 class Currency(str, Enum):
     RUB = "RUB"
     USD = "USD"
     EUR = "EUR"
+
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -28,7 +30,9 @@ class Payment(Base):
     currency: Mapped[Currency] = mapped_column(String(3))
     description: Mapped[str] = mapped_column(Text())
     metadata: Mapped[dict] = mapped_column(JSONB())
-    status: Mapped[PaymentStatus] = mapped_column(String(10), default=PaymentStatus.PENDING)
+    status: Mapped[PaymentStatus] = mapped_column(
+        String(10), default=PaymentStatus.PENDING
+    )
     idempotency_key: Mapped[str] = mapped_column(String(length=64), unique=True)
     webhook_url: Mapped[str] = mapped_column(String(255))
 

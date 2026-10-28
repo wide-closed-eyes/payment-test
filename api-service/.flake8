@@ -1,0 +1,9 @@
+[flake8]
+ignore = E203,E266,E501,W503
+per-file-ignores = __init__.py:F401
+max-line-length = 88
+max-complexity = 11
+exclude = .git,__pycache__,build,dist,migrations,.venv,venv,docs,old,test/*,common/*,var/*
+format = default
+show-source = true
+aggressive = 1

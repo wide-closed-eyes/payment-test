@@ -222,3 +222,5 @@ docker-compose.yml
 .idea
 openapi.yaml
 .DS_Store
+CLAUDE.md
+CONFIG.md

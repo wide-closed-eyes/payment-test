@@ -11,22 +11,22 @@ from src.database.tables import OutboxEvent, Payment
 class OutboxRepository(AsyncRepository[OutboxEvent]):
     def __init__(self, session: AsyncSession):
         super().__init__(OutboxEvent, session)
-    
-    async def create_payment_event(self, payment: Payment):
+
+    async def create_payment_event(self, payment: Payment, with_commit: bool = True):
         outbox_event = OutboxEvent(
             aggregate_type="Payment",
             aggregate_id=payment.id,
             event_type="payments.new",
-            payload=payment.dict(),
+            payload=payment.dump(),
         )
-        return await self.create(outbox_event)
-    
+        return await self.create(outbox_event, with_commit=with_commit)
+
     async def select_for_update(self, limit: int = 10) -> list[OutboxEvent]:
         return await self.get_all(
-            filter=[OutboxEvent.processed == False],
+            filter=[OutboxEvent.processed is False],
             order_by=OutboxEvent.created_at,
             is_for_update=True,
-            limit=limit
+            limit=limit,
         )
 
 

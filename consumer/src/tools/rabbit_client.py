@@ -1,6 +1,6 @@
-from faststream.rabbit import RabbitBroker, RabbitQueue, RabbitExchange, ExchangeType
-from src.config import config
+from faststream.rabbit import ExchangeType, RabbitBroker, RabbitExchange, RabbitQueue
 
+from src.config import config
 
 # --- DLX / DLQ ---
 dlx = RabbitExchange("payments.dlx", type=ExchangeType.DIRECT, durable=True)
@@ -42,7 +42,7 @@ def make_retry_queue(name: str, ttl_ms: int, routing_key: str) -> RabbitQueue:
     )
 
 
-retry_5s_queue  = make_retry_queue("payments.retry.5s",  5_000,  "retry.5s")
+retry_5s_queue = make_retry_queue("payments.retry.5s", 5_000, "retry.5s")
 retry_15s_queue = make_retry_queue("payments.retry.15s", 15_000, "retry.15s")
 retry_45s_queue = make_retry_queue("payments.retry.45s", 45_000, "retry.45s")
 
