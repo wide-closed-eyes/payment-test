@@ -108,8 +108,8 @@ chmod +x tests/curl.sh && ./tests/curl.sh
 
 ```bash
 # api-service
-cd api-service && poetry install --with dev && poetry run pytest
+cd api-service && poetry install --with dev --no-root && poetry run pytest
 
 # consumer
-cd consumer && poetry install --with dev && poetry run pytest
+cd consumer && poetry install --with dev --no-root && poetry run pytest
 ```

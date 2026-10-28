@@ -22,7 +22,7 @@ class PaymentService:
 
         payment = Payment(**body | {"idempotency_key": idempotency_key})
         try:
-            await self._payment.create(payment, with_commit=False)
+            payment = await self._payment.create(payment, with_commit=False)
         except IntegrityError:
             raise Exception("Payment already exists")
 
