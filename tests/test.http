@@ -27,7 +27,7 @@ Accept: application/json
 X-API-Key:{{api_key}}
 
 ### Повторить платёж (проверка идемпотентности)
-# Отправляем тот же Idempotency-Key, что и выше — должен вернуть ошибку
+# Отправляем тот же Idempotency-Key, что и выше — должен вернуть уже созданный платёж
 POST {{host}}/api/v1/payments
 Content-Type: {{contentType}}
 Idempotency-Key: 666

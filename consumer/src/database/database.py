@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from datetime import date, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -33,15 +32,3 @@ async_engine = create_async_engine(
 async_session_fabric = async_sessionmaker(
     async_engine, expire_on_commit=False, class_=AsyncSession
 )
-
-
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_fabric() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()

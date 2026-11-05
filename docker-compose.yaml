@@ -4,6 +4,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: payments_postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: payments
       POSTGRES_PASSWORD: payments
@@ -23,6 +24,7 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: payments_rabbitmq
+    restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest

@@ -16,15 +16,22 @@ class PaymentService:
         self._outbox = outbox_repo
 
     async def create_payment(self, body: dict, idempotency_key: str) -> Payment:
-        existing = await self._payment.get_one([Payment.idempotency_key == idempotency_key])
+        key_filter = [Payment.idempotency_key == idempotency_key]
+
+        existing = await self._payment.get_one(key_filter)
         if existing:
-            raise Exception("Payment already exists")
+            return existing
 
         payment = Payment(**body | {"idempotency_key": idempotency_key})
         try:
             payment = await self._payment.create(payment, with_commit=False)
         except IntegrityError:
-            raise Exception("Payment already exists")
+            # Параллельный запрос с тем же ключом успел создать платёж первым
+            await self._payment.rollback()
+            existing = await self._payment.get_one(key_filter)
+            if existing:
+                return existing
+            raise
 
         await self._outbox.create_payment_event(payment, with_commit=False)
         await self._payment.commit()

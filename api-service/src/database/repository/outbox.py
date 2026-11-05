@@ -23,7 +23,7 @@ class OutboxRepository(AsyncRepository[OutboxEvent]):
 
     async def select_for_update(self, limit: int = 10) -> list[OutboxEvent]:
         return await self.get_all(
-            filter=[OutboxEvent.processed is False],
+            filter=[OutboxEvent.processed.is_(False)],
             order_by=OutboxEvent.created_at,
             is_for_update=True,
             limit=limit,

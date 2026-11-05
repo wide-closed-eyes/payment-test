@@ -18,13 +18,11 @@ router = APIRouter(
 async def create_payment(
     body: PaymentCreate,
     service: PaymentServiceGetter,
-    idempotency_key: str = Header(alias="Idempotency-Key"),
+    idempotency_key: str = Header(alias="Idempotency-Key", max_length=64),
 ):
-    try:
-        payment = await service.create_payment(body=body.model_dump(), idempotency_key=idempotency_key)
-    except Exception as e:
-        raise HTTPException(status_code=409, detail=str(e))
-    return payment
+    return await service.create_payment(
+        body=body.model_dump(), idempotency_key=idempotency_key
+    )
 
 
 @router.get("/{payment_id}", response_model=PaymentFullResponse, status_code=200)

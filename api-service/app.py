@@ -11,8 +11,6 @@ from src.tools.worker import OutboxWorker
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await rabbitmq_client.start()
-
     worker = OutboxWorker(rabbitmq_client, async_session_fabric)
     worker_task = asyncio.create_task(worker.start())
     app.state.outbox_worker = worker

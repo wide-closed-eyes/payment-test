@@ -20,6 +20,15 @@ def test_payment_create_valid():
     assert p.currency == "RUB"
 
 
+def test_payment_create_accepts_zero_amount():
+    assert PaymentCreate(**{**VALID_PAYLOAD, "amount": 0}).amount == 0
+
+
+def test_payment_create_rejects_negative_amount():
+    with pytest.raises(ValidationError):
+        PaymentCreate(**{**VALID_PAYLOAD, "amount": -0.01})
+
+
 def test_payment_create_invalid_currency():
     with pytest.raises(ValidationError):
         PaymentCreate(**{**VALID_PAYLOAD, "currency": "GBP"})

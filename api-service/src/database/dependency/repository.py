@@ -170,3 +170,9 @@ class AsyncRepository(Generic[M]):
         Commit changes
         """
         await self._session.commit()
+
+    async def rollback(self) -> None:
+        """
+        Rollback changes
+        """
+        await self._session.rollback()

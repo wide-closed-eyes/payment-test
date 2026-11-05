@@ -91,7 +91,7 @@ fi
 # ---------------------------------------------------------------------------
 # 3. Проверка идемпотентности: тот же ключ, другое тело
 # ---------------------------------------------------------------------------
-section "3. Повторить платёж с тем же Idempotency-Key (ожидается ошибка 409)"
+section "3. Повторить платёж с тем же Idempotency-Key (ожидается тот же платёж)"
 
 REPEAT_RESPONSE=$(curl -sS -w "\n%{http_code}" \
     -X POST "$HOST/api/v1/payments" \
@@ -112,10 +112,12 @@ REPEAT_STATUS=$(echo "$REPEAT_RESPONSE" | tail -n1)
 echo "HTTP $REPEAT_STATUS"
 echo "$REPEAT_BODY" | jq . 2>/dev/null || echo "$REPEAT_BODY"
 
-if [ "$REPEAT_STATUS" = "409" ] || [ "$REPEAT_STATUS" = "422" ]; then
-    ok "Идемпотентность работает: повторный ключ отклонён (HTTP $REPEAT_STATUS)"
+REPEAT_PAYMENT_ID=$(echo "$REPEAT_BODY" | jq -r '.id // empty' 2>/dev/null)
+
+if [ "$REPEAT_STATUS" = "202" ] && [ "$REPEAT_PAYMENT_ID" = "$PAYMENT_ID" ]; then
+    ok "Идемпотентность работает: возвращён тот же платёж (id=$REPEAT_PAYMENT_ID)"
 else
-    fail "Ожидался 409/422, получен HTTP $REPEAT_STATUS"
+    fail "Ожидался HTTP 202 и id=$PAYMENT_ID, получен HTTP $REPEAT_STATUS и id=$REPEAT_PAYMENT_ID"
 fi
 
 # ---------------------------------------------------------------------------

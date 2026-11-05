@@ -5,7 +5,7 @@ from pydantic import AnyUrl, BaseModel, ConfigDict, Field, field_validator
 
 
 class PaymentCreate(BaseModel):
-    amount: float
+    amount: float = Field(ge=0)
     currency: Literal["RUB", "USD", "EUR"]
     description: str
     metadata: dict

@@ -29,23 +29,36 @@ def service(payment_repo, outbox_repo):
     return PaymentService(payment_repo=payment_repo, outbox_repo=outbox_repo)
 
 
-async def test_create_payment_raises_on_existing_idempotency_key(service, payment_repo):
-    payment_repo.get_one = AsyncMock(return_value=Payment(idempotency_key="key-1"))
+async def test_create_payment_returns_existing_on_repeated_key(service, payment_repo, outbox_repo):
+    existing = Payment(idempotency_key="key-1")
+    payment_repo.get_one = AsyncMock(return_value=existing)
 
-    with pytest.raises(Exception, match="Payment already exists"):
-        await service.create_payment(body=BODY, idempotency_key="key-1")
+    result = await service.create_payment(body=BODY, idempotency_key="key-1")
 
+    assert result is existing
     payment_repo.create.assert_not_called()
-    outbox_repo_from_service = service._outbox
-    outbox_repo_from_service.create_payment_event.assert_not_called()
+    outbox_repo.create_payment_event.assert_not_called()
 
 
-async def test_create_payment_raises_on_integrity_error_race(service, payment_repo):
+async def test_create_payment_returns_existing_on_integrity_error_race(service, payment_repo, outbox_repo):
     """Two concurrent requests pass the idempotency check; second hits UNIQUE constraint."""
-    payment_repo.get_one = AsyncMock(return_value=None)
+    existing = Payment(idempotency_key="key-new")
+    payment_repo.get_one = AsyncMock(side_effect=[None, existing])
     payment_repo.create = AsyncMock(side_effect=IntegrityError(None, None, Exception("unique")))
 
-    with pytest.raises(Exception, match="Payment already exists"):
+    result = await service.create_payment(body=BODY, idempotency_key="key-new")
+
+    assert result is existing
+    payment_repo.rollback.assert_awaited_once()
+    outbox_repo.create_payment_event.assert_not_called()
+    payment_repo.commit.assert_not_called()
+
+
+async def test_create_payment_reraises_integrity_error_without_existing_payment(service, payment_repo):
+    payment_repo.get_one = AsyncMock(return_value=None)
+    payment_repo.create = AsyncMock(side_effect=IntegrityError(None, None, Exception("other")))
+
+    with pytest.raises(IntegrityError):
         await service.create_payment(body=BODY, idempotency_key="key-new")
 
 
